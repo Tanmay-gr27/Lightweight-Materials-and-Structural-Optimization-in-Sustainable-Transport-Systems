@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sustainable Transport Engineering Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals with Emerald Accent -->
+    <!-- Application Structure Plan: The SPA is designed as a tabbed thematic explorer. This structure was chosen over a linear report layout to better suit a "research-centered synthesis." It allows users to non-linearly explore the core topics (Introduction, Materials, Optimization, Innovations, Challenges) at their own pace. This is more user-friendly and encourages exploration. The main navigation switches between full-page sections, and some sections (like Materials and Optimization) use secondary click-based interactions to reveal detailed text, keeping the UI clean. -->
+    <!-- Visualization & Content Choices: 
+        1. Report Info: Impact of lightweighting. -> Goal: Inform/Contextualize -> Viz: Donut Chart -> Interaction: Hover tooltips -> Justification: Provides a quick, high-level visual of "why this matters" in the introduction. -> Library: Chart.js.
+        2. Report Info: Comparison of material properties (strength, cost). -> Goal: Compare -> Viz: Grouped Bar Chart -> Interaction: Hover tooltips -> Justification: Allows direct, multi-variable comparison of the key lightweight materials. -> Library: Chart.js.
+        3. Report Info: Optimization methods (Topology, etc.). -> Goal: Organize/Inform -> Viz: HTML/CSS Diagram -> Interaction: Clickable-tabs to show/hide descriptive text. -> Justification: Visually represents a process flow without using forbidden SVG/Mermaid. Interaction manages information density. -> Library: Vanilla JS.
+        4. Report Info: Key challenges (cost, recycling). -> Goal: Analyze -> Viz: Radar Chart -> Interaction: Hover tooltips -> Justification: Ideal for showing a multi-dimensional "profile" of challenges for a given concept. -> Library: Chart.js.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+                max-height: 400px;
+            }
+        }
+        .nav-link.active-tab {
+            border-bottom-color: #059669;
+            color: #065f46;
+            font-weight: 600;
+        }
+        .secondary-nav-link.active-secondary {
+            background-color: #d1fae5;
+            color: #065f46;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-amber-50 font-sans text-gray-800 leading-relaxed">
+
+    <header class="bg-white shadow-md sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-4">
+            <h1 class="text-3xl font-bold text-emerald-800">Sustainable Transport Engineering</h1>
+            <p class="text-lg text-gray-600">Interactive Explorer: Lightweight Materials & Structural Optimization</p>
+        </div>
+        <nav class="bg-white border-b-2 border-gray-200">
+            <div class="container mx-auto px-4 flex flex-wrap justify-center sm:justify-start space-x-2 sm:space-x-6">
+                <button class="nav-link active-tab text-gray-600 py-3 px-2 text-sm sm:text-base border-b-4 border-transparent hover:border-emerald-500 hover:text-emerald-700 transition duration-150" data-target="intro">Introduction</button>
+                <button class="nav-link text-gray-600 py-3 px-2 text-sm sm:text-base border-b-4 border-transparent hover:border-emerald-500 hover:text-emerald-700 transition duration-150" data-target="materials">Materials</button>
+                <button class="nav-link text-gray-600 py-3 px-2 text-sm sm:text-base border-b-4 border-transparent hover:border-emerald-500 hover:text-emerald-700 transition duration-150" data-target="optimization">Optimization</button>
+                <button class="nav-link text-gray-600 py-3 px-2 text-sm sm:text-base border-b-4 border-transparent hover:border-emerald-500 hover:text-emerald-700 transition duration-150" data-target="innovations">Innovations</button>
+                <button class="nav-link text-gray-600 py-3 px-2 text-sm sm:text-base border-b-4 border-transparent hover:border-emerald-500 hover:text-emerald-700 transition duration-150" data-target="challenges">Challenges & Future</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-8">
+
+        <section id="intro" class="content-section space-y-6">
+            <h2 class="text-2xl font-semibold text-emerald-700 border-b border-emerald-200 pb-2">1. The Need for Lightweighting</h2>
+            <p class="text-base">This section introduces the core concepts of lightweighting and structural optimization within sustainable transport. The primary driver is the urgent need to reduce energy consumption and greenhouse gas emissions. In conventional vehicles, every 10% reduction in vehicle mass can lead to a 6-8% improvement in fuel economy. For electric vehicles (EVs), lightweighting is even more critical, as it directly extends battery range and reduces the required battery size—the most expensive and heavy component.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3">Core Definitions</h3>
+                    <ul class="space-y-3">
+                        <li>
+                            <strong class="text-emerald-700">Lightweight Materials:</strong>
+                            <span class="text-gray-600">Materials with a high strength-to-weight ratio (e.g., aluminum alloys, carbon fiber composites, magnesium) that can replace traditional materials like steel.</span>
+                        </li>
+                        <li>
+                            <strong class="text-emerald-700">Structural Optimization:</strong>
+                            <span class="text-gray-600">Using computational methods (like topology optimization) to design a component's geometry, placing material only where it's needed to withstand loads, thus reducing mass without compromising safety or performance.</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3 text-center">Impact of Vehicle Mass on Energy Use</h3>
+                    <div class="chart-container">
+                        <canvas id="impactChart"></canvas>
+                    </div>
+                    <p class="text-center text-sm text-gray-500 mt-2">Illustrative breakdown of factors contributing to energy savings from lightweighting, including reduced rolling resistance and inertia.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="materials" class="content-section hidden space-y-6">
+            <h2 class="text-2xl font-semibold text-emerald-700 border-b border-emerald-200 pb-2">2. Key Lightweight Materials</h2>
+            <p class="text-base">A wide range of materials are employed to reduce vehicle weight. The choice depends on a complex balance of cost, performance, manufacturability, and recyclability. This section explores the primary categories. Click a material type below to see its properties, or analyze the comparative chart.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">Material Details</h3>
+                    <div class="flex flex-wrap gap-2 mb-4 border-b border-gray-200 pb-2">
+                        <button class="secondary-nav-link active-secondary text-sm px-3 py-1.5 rounded-full bg-gray-100 hover:bg-emerald-100 text-gray-700" data-target="mat-composites">Composites</button>
+                        <button class="secondary-nav-link text-sm px-3 py-1.5 rounded-full bg-gray-100 hover:bg-emerald-100 text-gray-700" data-target="mat-alloys">Light Alloys</button>
+                        <button class="secondary-nav-link text-sm px-3 py-1.5 rounded-full bg-gray-100 hover:bg-emerald-100 text-gray-700" data-target="mat-polymers">Advanced Polymers</button>
+                    </div>
+                    <div id="mat-details" class="space-y-4">
+                        <div id="mat-composites" class="secondary-content space-y-2">
+                            <h4 class="text-lg font-semibold text-emerald-700">Carbon Fiber Composites (CFRP)</h4>
+                            <p class-><strong class="text-gray-700">Properties:</strong> Exceptional strength-to-weight ratio, high stiffness, excellent fatigue resistance. Can be 50% lighter than steel and 30% lighter than aluminum.</p>
+                            <p class="text-gray-600"><strong class="text-gray-700">Considerations:</strong> High manufacturing cost, complex and energy-intensive production, and challenges in recycling have limited its use to high-performance and aerospace applications, though this is changing.</p>
+                        </div>
+                        <div id="mat-alloys" class="secondary-content hidden space-y-2">
+                            <h4 class="text-lg font-semibold text-emerald-700">Light Alloys (Al, Mg, Ti)</h4>
+                            <p class-><strong class="text-gray-700">Properties:</strong> Good strength, excellent corrosion resistance (Aluminum), and established manufacturing processes. Magnesium is the lightest structural metal, but is more costly and reactive.</p>
+                            <p class="text-gray-600"><strong class="text-gray-700">Considerations:</strong> More expensive than steel, and their production (especially primary aluminum) is energy-intensive. Recycling infrastructure is well-established.</p>
+                        </div>
+                        <div id="mat-polymers" class="secondary-content hidden space-y-2">
+                            <h4 class="text-lg font-semibold text-emerald-700">Advanced Polymers & Foams</h4>
+                            <p class-><strong class="text-gray-700">Properties:</strong> Very lightweight, easily molded into complex shapes, good insulation, and vibration-dampening properties. Used for non-structural and semi-structural parts like interiors, bumpers, and body panels.</p>
+                            <p class="text-gray-600"><strong class="text-gray-700">Considerations:</strong> Lower strength and stiffness than metals or composites. Recycling can be complex, and most are derived from fossil fuels, raising sustainability questions.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3 text-center">Material Property Comparison</h3>
+                    <div class="chart-container">
+                        <canvas id="materialChart"></canvas>
+                    </div>
+                    <p class="text-center text-sm text-gray-500 mt-2">Relative comparison of specific strength (strength-to-weight) and relative cost for common structural materials.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="optimization" class="content-section hidden space-y-6">
+            <h2 class="text-2xl font-semibold text-emerald-700 border-b border-emerald-200 pb-2">3. Structural Optimization Approaches</h2>
+            <p class="text-base">Simply swapping materials is not enough; the full potential of lightweighting is unlocked by redesigning the structure itself. Computational optimization methods allow engineers to create highly efficient, "bionic" designs that use the minimum amount of material necessary. Click a method below to learn more.</p>
+            
+            <div class="flex flex-col md:flex-row items-center justify-center gap-2 text-center my-6">
+                <div class="bg-emerald-50 p-4 rounded-lg shadow w-full md:w-1/4">
+                    <h4 class="font-semibold text-emerald-800">1. Input</h4>
+                    <p class="text-sm text-emerald-700">Define Loads, Constraints & Design Space</p>
+                </div>
+                <div class="text-2xl text-emerald-500 font-bold">&rarr;</div>
+                <div class="bg-emerald-100 p-4 rounded-lg shadow-lg w-full md:w-1/2">
+                    <h4 class="font-semibold text-emerald-800">2. Optimization Process</h4>
+                    <div class="flex flex-wrap gap-2 my-2 justify-center">
+                        <button class="secondary-nav-link active-secondary text-sm px-3 py-1.5 rounded-full bg-white hover:bg-emerald-50" data-target="opt-topology">Topology</button>
+                        <button class="secondary-nav-link text-sm px-3 py-1.5 rounded-full bg-white hover:bg-emerald-50" data-target="opt-generative">Generative</button>
+                        <button class="secondary-nav-link text-sm px-3 py-1.5 rounded-full bg-white hover:bg-emerald-50" data-target="opt-sizing">Sizing</button>
+                    </div>
+                </div>
+                <div class="text-2xl text-emerald-500 font-bold">&rarr;</div>
+                <div class="bg-emerald-50 p-4 rounded-lg shadow w-full md:w-1/4">
+                    <h4 class="font-semibold text-emerald-800">3. Output</h4>
+                    <p class="text-sm text-emerald-700">Optimized, Lightweight Component Concept</p>
+                </div>
+            </div>
+
+            <div id="opt-details" class="bg-white p-6 rounded-lg shadow-lg">
+                <div id="opt-topology" class="secondary-content space-y-2">
+                    <h4 class="text-lg font-semibold text-emerald-700">Topology Optimization</h4>
+                    <p class="text-gray-600">This is the most common method. It starts with a "block" of material (the design space) and iteratively removes material from areas that are not contributing to the structure's stiffness or strength. The result is an efficient, often organic-looking "skeleton" that shows the ideal load paths. It is excellent for creating initial design concepts that are then refined for manufacturing.</p>
+                </div>
+                <div id="opt-generative" class="secondary-content hidden space-y-2">
+                    <h4 class="text-lg font-semibold text-emerald-700">Generative Design</h4>
+                    <p class="text-gray-600">A related, AI-powered approach. Instead of just one concept, the engineer inputs goals (e.g., "minimize mass," "cost under $50") and constraints (e.g., "must connect here," "made of aluminum"). The AI algorithm then generates hundreds or thousands of high-performing design options that meet the criteria, often discovering non-intuitive solutions that a human designer might never conceive of.</p>
+                </div>
+                <div id="opt-sizing" class="secondary-content hidden space-y-2">
+                    <h4 class="text-lg font-semibold text-emerald-700">Sizing & Shape Optimization</h4>
+                    <p class="text-gray-600">These are more refined methods used on an existing design concept. Sizing optimization determines the ideal thickness for different parts of a component (e.g., making a sheet metal panel thicker in high-stress areas and thinner elsewhere). Shape optimization fine-tunes the boundaries and contours of a part to reduce stress concentrations and improve durability, further shaving off weight.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="innovations" class="content-section hidden space-y-6">
+            <h2 class="text-2xl font-semibold text-emerald-700 border-b border-emerald-200 pb-2">4. Ongoing Innovations & Real-World Trends</h2>
+            <p class="text-base">The field is evolving rapidly, driven by advances in material science and digital manufacturing. These innovations promise even greater efficiency gains, while real-world trends show how these technologies are already being adopted in the market.</p>
+            
+            <h3 class="text-xl font-semibold text-gray-700 pt-4">Key Innovations</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-lg shadow-lg transform transition hover:scale-105 hover:shadow-xl">
+                    <h4 class="text-lg font-semibold text-emerald-700">4D Printing & Smart Materials</h4>
+                    <p class="text-sm text-gray-600">Moving beyond 3D, 4D-printed components can change their shape or properties over time in response to stimuli (e.g., heat, moisture). This could allow for adaptive aerodynamic surfaces or self-assembling structures.</p>
+                </div>
+                <div class="bg-white p-5 rounded-lg shadow-lg transform transition hover:scale-105 hover:shadow-xl">
+                    <h4 class="text-lg font-semibold text-emerald-700">Self-Healing Materials</h4>
+                    <p class="text-sm text-gray-600">Polymers and composites are being developed with microcapsules or vascular networks that can "bleed" a resin to repair cracks and damage. This extends component life and improves safety, reducing the need for over-engineering.</p>
+                </div>
+                <div class="bg-white p-5 rounded-lg shadow-lg transform transition hover:scale-105 hover:shadow-xl">
+                    <h4 class="text-lg font-semibold text-emerald-700">AI-Driven Material Discovery</h4>
+                    <p class="text-sm text-gray-600">Machine learning models are being used to simulate and discover new material formulations (e.g., novel alloys, composite matrixes) with desired properties, dramatically accelerating the research and development cycle.</p>
+                </div>
+            </div>
+
+            <h3 class="text-xl font-semibold text-gray-700 pt-4">Real-World Trends</h3>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <ul class="list-disc list-inside space-y-3">
+                    <li class="text-gray-700"><strong class="text-emerald-700">Multi-Material "Skateboards":</strong> Modern EV platforms (the "skateboard") are a prime example. They strategically combine high-strength steel for crash safety, aluminum extrusions for stiffness, and composite battery enclosures for a lightweight, optimized, multi-material solution.</li>
+                    <li class="text-gray-700"><strong class="text-emerald-700">Aerospace Adoption:</strong> The aerospace industry has long been the pioneer, with aircraft like the Boeing 787 and Airbus A350 using over 50% composite materials by weight, a trend that is now trickling down to automotive and rail.</li>
+                    <li class="text-gray-700"><strong class="text-emerald-700">Additive Manufacturing (3D Printing):</strong> While still costly for mass production, 3D printing is widely used for creating prototypes and complex, lightweight components (like optimized brackets) for high-performance vehicles and aerospace, enabling designs that are impossible to manufacture traditionally.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="challenges" class="content-section hidden space-y-6">
+            <h2 class="text-2xl font-semibold text-emerald-700 border-b border-emerald-200 pb-2">5. Critical Challenges & Future Outlook</h2>
+            <p class="text-base">Despite the clear benefits, widespread adoption of advanced lightweight materials and optimization techniques faces significant hurdles. Overcoming these challenges is key to realizing a truly sustainable transport future.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <div class="bg-white p-4 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3 text-center">Challenge Profile</h3>
+                    <div class="chart-container" style="max-width: 400px;">
+                        <canvas id="challengeChart"></canvas>
+                    </div>
+                    <p class="text-center text-sm text-gray-500 mt-2">Relative severity of key barriers to adoption for advanced materials like CFRP.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3">Key Barriers</h3>
+                    <ul class="space-y-3">
+                        <li>
+                            <strong class="text-emerald-700">High Cost:</strong>
+                            <span class="text-gray-600">Materials like carbon fiber and titanium are orders of magnitude more expensive than steel, both in raw material and manufacturing costs.</span>
+                        </li>
+                        <li>
+                            <strong class="text-emerald-700">Recycling & Circularity:</strong>
+                            <span class="text-gray-600">This is a major sustainability concern. Mixed-material components are difficult to separate, and recycling composites is energy-intensive and often results in lower-grade "downcycled" material.</span>
+                        </li>
+                        <li>
+                            <strong class="text-emerald-700">Manufacturing & Scalability:</strong>
+                            <span class="text-gray-600">Production cycle times for composites are much slower than for steel stamping. New joining techniques for multi-material bodies are complex and require new factory infrastructure.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <h3 class="text-xl font-semibold text-gray-700 pt-4">Future Outlook</h3>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <p class="text-gray-700">The future of sustainable transport design lies in a <strong class="text-emerald-700">holistic, "cradle-to-cradle" approach</strong>. This moves beyond just minimizing weight and emissions during the vehicle's "use" phase. Future research will focus heavily on:
+                </p>
+                <ul class="list-disc list-inside space-y-2 mt-3 text-gray-600">
+                    <li><strong class="text-gray-700">Design for Disassembly:</strong> Creating components that can be easily separated into their constituent materials at end-of-life.</li>
+                    <li><strong class="text-gray-700">Bio-based Materials:</strong> Developing composites and polymers from renewable feedstocks (like flax, hemp, or bio-resins) to reduce carbon footprint.</li>
+                    <li><strong class="text-gray-700">Economical Recycling:</strong> Innovating new chemical and mechanical recycling processes to create a closed-loop "circular economy" for advanced materials.</li>
+                </ul>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center p-6 mt-8 border-t border-gray-200 bg-white">
+        <p class="text-sm text-gray-500">Interactive Synthesis App | Lightweight Materials & Structural Optimization</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let impactChartInstance, materialChartInstance, challengeChartInstance;
+
+            const initApp = () => {
+                setupNav();
+                setupSecondaryNavs();
+                renderImpactChart();
+                renderMaterialChart();
+                renderChallengeChart();
+            };
+
+            const setupNav = () => {
+                const navLinks = document.querySelectorAll('.nav-link');
+                const contentSections = document.querySelectorAll('.content-section');
+
+                navLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        const targetId = link.getAttribute('data-target');
+                        
+                        navLinks.forEach(navLink => navLink.classList.remove('active-tab'));
+                        link.classList.add('active-tab');
+
+                        contentSections.forEach(section => {
+                            if (section.id === targetId) {
+                                section.classList.remove('hidden');
+                            } else {
+                                section.classList.add('hidden');
+                            }
+                        });
+                    });
+                });
+            };
+
+            const setupSecondaryNavs = () => {
+                const sectionsWithSecondaryNavs = document.querySelectorAll('#materials, #optimization');
+                
+                sectionsWithSecondaryNavs.forEach(section => {
+                    const navLinks = section.querySelectorAll('.secondary-nav-link');
+                    const contentBlocks = section.querySelectorAll('.secondary-content');
+
+                    navLinks.forEach(link => {
+                        link.addEventListener('click', () => {
+                            const targetId = link.getAttribute('data-target');
+
+                            navLinks.forEach(navLink => navLink.classList.remove('active-secondary'));
+                            link.classList.add('active-secondary');
+
+                            contentBlocks.forEach(block => {
+                                if (block.id === targetId) {
+                                    block.classList.remove('hidden');
+                                } else {
+                                    block.classList.add('hidden');
+                                }
+                            });
+                        });
+                    });
+                });
+            };
+
+            const commonChartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: { size: 10 },
+                            boxWidth: 20
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#ffffff',
+                        titleColor: '#065f46',
+                        bodyColor: '#374151',
+                        borderColor: '#e5e7eb',
+                        borderWidth: 1,
+                        padding: 10,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.r) {
+                                     label += context.parsed.r
+                                } else if (context.parsed.y) {
+                                     label += context.parsed.y
+                                } else if (context.parsed) {
+                                    label += context.parsed;
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            font: { size: 10 },
+                            autoSkip: false,
+                            maxRotation: 0,
+                            callback: function(value, index, values) {
+                                const label = this.getLabelForValue(value);
+                                if (label.length > 16) {
+                                    return label.split(' ').map(word => word.length > 8 ? word.substring(0, 8) + '...' : word);
+                                }
+                                return label;
+                            }
+                        }
+                    },
+                    y: {
+                        ticks: { font: { size: 10 } },
+                        beginAtZero: true
+                    },
+                    r: {
+                        angleLines: { color: '#e5e7eb' },
+                        grid: { color: '#e5e7eb' },
+                        pointLabels: { font: { size: 11 } },
+                        ticks: {
+                            backdropColor: 'transparent',
+                            font: { size: 9 },
+                            stepSize: 2
+                        }
+                    }
+                }
+            };
+
+            const renderImpactChart = () => {
+                const ctx = document.getElementById('impactChart');
+                if (!ctx) return;
+                
+                const data = {
+                    labels: ['Reduced Rolling Resistance', 'Reduced Inertia', 'Improved Powertrain Efficiency'],
+                    datasets: [{
+                        label: 'Contribution to Energy Savings',
+                        data: [45, 35, 20],
+                        backgroundColor: [
+                            '#10b981',
+                            '#34d399',
+                            '#6ee7b7'
+                        ],
+                        borderColor: '#fdfbf6',
+                        borderWidth: 2,
+                        hoverOffset: 4
+                    }]
+                };
+
+                impactChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: data,
+                    options: {
+                        ...commonChartOptions,
+                        scales: { x: { display: false }, y: { display: false } }
+                    }
+                });
+            };
+
+            const renderMaterialChart = () => {
+                const ctx = document.getElementById('materialChart');
+                if (!ctx) return;
+
+                const data = {
+                    labels: ['High-Strength Steel', 'Aluminum Alloy', 'Carbon Fiber (CFRP)'],
+                    datasets: [
+                        {
+                            label: 'Specific Strength (Relative)',
+                            data: [3, 5, 10],
+                            backgroundColor: '#069467',
+                            borderColor: '#069467',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Relative Cost',
+                            data: [1, 3, 15],
+                            backgroundColor: '#f59e0b',
+                            borderColor: '#f59e0b',
+                            borderWidth: 1
+                        }
+                    ]
+                };
+
+                materialChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: data,
+                    options: {
+                        ...commonChartOptions,
+                        scales: { 
+                            x: { ...commonChartOptions.scales.x, grid: { display: false } }, 
+                            y: { ...commonChartOptions.scales.y, title: { display: true, text: 'Relative Units' } } 
+                        }
+                    }
+                });
+            };
+            
+            const renderChallengeChart = () => {
+                const ctx = document.getElementById('challengeChart');
+                if (!ctx) return;
+
+                const data = {
+                    labels: ['High Cost', 'Scalability', 'Recycling', 'Joining', 'Repair'],
+                    datasets: [{
+                        label: 'Severity of Challenge',
+                        data: [9, 7, 8, 6, 7],
+                        backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                        borderColor: 'rgba(245, 158, 11, 1)',
+                        pointBackgroundColor: 'rgba(245, 158, 11, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(245, 158, 11, 1)',
+                        borderWidth: 2
+                    }]
+                };
+
+                challengeChartInstance = new Chart(ctx, {
+                    type: 'radar',
+                    data: data,
+                    options: {
+                        ...commonChartOptions,
+                        scales: { r: { ...commonChartOptions.scales.r, min: 0, max: 10 } }
+                    }
+                });
+            };
+
+            initApp();
+        });
+    </script>
+</body>
+</html>
